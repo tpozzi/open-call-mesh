@@ -1,0 +1,13 @@
+using OpenCallMesh.Transport;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+var port=19000+Random.Shared.Next(500);
+using var cts=new CancellationTokenSource(TimeSpan.FromSeconds(5));
+var received=new TaskCompletionSource<string>();
+var server=new LineTransport();
+var run=server.RunServerAsync(new IPEndPoint(IPAddress.Loopback,port),s=>{received.TrySetResult(s);return Task.CompletedTask;},cts.Token);
+await Task.Delay(50,cts.Token); await LineTransport.SendAsync("127.0.0.1",port,"synthetic",cts.Token);
+if(await received.Task != "synthetic") throw new Exception("Transport failed");
+cts.Cancel(); Console.WriteLine("Transport tests passed");

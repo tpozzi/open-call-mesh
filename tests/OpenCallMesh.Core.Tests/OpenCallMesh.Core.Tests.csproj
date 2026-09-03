@@ -1,0 +1,1 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType></PropertyGroup><ItemGroup><ProjectReference Include="../../src/OpenCallMesh.Core/OpenCallMesh.Core.csproj" /><ProjectReference Include="../../src/OpenCallMesh.Controller/OpenCallMesh.Controller.csproj" /></ItemGroup></Project>

@@ -1,0 +1,15 @@
+bin/
+obj/
+.vs/
+.idea/
+secrets/
+runtime/
+sessions/
+*.key
+*.pem
+*.pfx
+*.user
+*.suo
+*.wav
+*.raw
+*.pcap

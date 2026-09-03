@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup><ProjectReference Include="../OpenCallMesh.Domain/OpenCallMesh.Domain.csproj" /><ProjectReference Include="../OpenCallMesh.Core/OpenCallMesh.Core.csproj" /><ProjectReference Include="../OpenCallMesh.Audio.Windows/OpenCallMesh.Audio.Windows.csproj" /><ProjectReference Include="../OpenCallMesh.Agent/OpenCallMesh.Agent.csproj" /><ProjectReference Include="../OpenCallMesh.Controller/OpenCallMesh.Controller.csproj" /></ItemGroup>
+</Project>
