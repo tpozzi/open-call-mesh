@@ -13,4 +13,7 @@ if (await SyntheticRoute.CopyAsync(source, sink, guard, "b", "f") != 2 || sink.F
 var controller = new OpenCallMesh.Controller.ControllerRuntime();
 controller.Register(new AgentIdentity("agent-a", "machine", "instance", "0.1.0", new HashSet<string> { "pcm" }));
 if (controller.Agents.Count != 1) throw new Exception("Controller registration failed");
+var converted = CanonicalAudioConverter.StereoFloat32ToMono48K([1, -1, 0.5f, 0.5f, 0, 0], 48000);
+var resampled = CanonicalAudioConverter.StereoFloat32ToMono48K(new float[441 * 2], 44100);
+if (converted.Length != 3 || Math.Abs(converted[0]) > 0.0001f || Math.Abs(converted[1] - 0.5f) > 0.0001f || resampled.Length != 480) throw new Exception("Canonical audio conversion failed");
 Console.WriteLine("Core tests passed");
