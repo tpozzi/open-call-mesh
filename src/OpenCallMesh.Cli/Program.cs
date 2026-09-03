@@ -1,3 +1,4 @@
+#pragma warning disable CA1416
 using OpenCallMesh.Audio.Windows;
 using OpenCallMesh.Agent;
 using OpenCallMesh.Controller;
@@ -27,6 +28,24 @@ if (args is ["telegram", "find"])
     foreach (var process in processes) Console.WriteLine($"TELEGRAM_PROCESS_FOUND=YES pid={process.ProcessId} executable={process.ExecutableName} path={process.ExecutablePath ?? "N/A"} start={process.StartTime?.ToString("O") ?? "N/A"}");
     return;
 }
+if (args.Length >= 2 && args[0] == "audio" && args[1] == "capture-process")
+{
+    if (!OperatingSystem.IsWindows()) { Console.WriteLine("Windows process-loopback capture requires Windows."); return; }
+    var duration = TimeSpan.FromSeconds(30);
+    var pid = 0;
+    for (var i = 2; i < args.Length; i++)
+    {
+        if (args[i] == "--duration" && i + 1 < args.Length && double.TryParse(args[++i], out var seconds)) duration = TimeSpan.FromSeconds(seconds);
+        else if (args[i] == "--pid" && i + 1 < args.Length) _ = int.TryParse(args[++i], out pid);
+        else if (args[i] == "--process" && i + 1 < args.Length && string.Equals(args[++i], "Telegram", StringComparison.OrdinalIgnoreCase))
+            pid = new TelegramProcessDetector().Find().SingleOrDefault()?.ProcessId ?? 0;
+    }
+    if (pid <= 0) { Console.WriteLine("PROCESS_LOOPBACK_ACTIVATION=FAIL"); Console.WriteLine("FAILURE_STAGE=ProcessResolution"); return; }
+    Console.WriteLine($"TargetProcess=Telegram.exe\nTargetPid={pid}\nWindowsBuild={Environment.OSVersion.Version.Build}\nTargetProcessTreeMode=INCLUDE");
+    var result = await new NativeProcessLoopbackCapture().CaptureAsync(pid, duration);
+    Console.WriteLine($"PROCESS_LOOPBACK_ACTIVATION={(result.Status == "PASS" ? "PASS" : "FAIL")}\nAPI_CALL_HRESULT=0x{result.ApiHresult:X8}\nACTIVATION_RESULT_HRESULT=0x{result.ActivationHresult:X8}\nFAILURE_HRESULT=0x{result.FailureHresult:X8}\nCAPTURE_STATE={result.Status}\nDuration={result.DurationSeconds:F1}\nFrames={result.Frames}\nBytes={result.Bytes}\nSilentFrames={result.SilentFrames}\nPeak={result.Peak:F6}\nRMS={result.Rms:F6}\nFormat={result.SampleRate}Hz/{result.Channels}ch/{result.BitsPerSample}bit");
+    return;
+}
 if (args is ["controller", "run"])
 {
     using var cts = new CancellationTokenSource();
@@ -44,4 +63,4 @@ if (args.Length >= 2 && args[0] == "agent" && args[1] == "register")
     Console.WriteLine($"Agent registered: {id}");
     return;
 }
-Console.WriteLine("OpenCallMesh CLI\nCommands: audio list | audio sessions | telegram find | controller run | agent register [id] [controller-host]");
+Console.WriteLine("OpenCallMesh CLI\nCommands: audio list | audio sessions | audio capture-process --process Telegram [--duration 30] | telegram find | controller run | agent register [id] [controller-host]");

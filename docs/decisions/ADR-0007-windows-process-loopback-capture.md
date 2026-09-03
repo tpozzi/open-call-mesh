@@ -1,6 +1,6 @@
 # ADR-0007: Windows process loopback capture
 
-Status: proposed
+Status: accepted
 
 ## Context
 
@@ -10,16 +10,15 @@ captures the complete render mix and is therefore insufficient.
 
 ## Decision
 
-Target Microsoft's process loopback activation path:
-`ActivateAudioInterfaceAsync` with `VIRTUAL_AUDIO_DEVICE_PROCESS_LOOPBACK` and
-`AUDIOCLIENT_ACTIVATION_PARAMS`, selecting the Telegram process tree. The
-implementation will sit behind `IProcessAudioCapture` and feed a bounded PCM
-buffer; callbacks will not perform network I/O, logging, or disk writes.
+Target Microsoft's process loopback activation path through NAudio 3.0.1:
+`ActivateAudioInterfaceAsync` with `AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS`,
+selecting the Telegram process tree. The implementation sits behind the
+Windows audio component and feeds in-memory statistics; callbacks do not
+perform network I/O, logging, or disk writes.
 
-The current release only provides the interface boundary and an explicit
-Windows stub. It does not claim process capture until a Windows integration
-test proves non-zero Telegram audio and excludes a concurrent non-Telegram test
-tone.
+The current release has passed runtime activation and frame-flow testing on
+Windows 11 build 26100. Non-zero Telegram audio and exclusion of a concurrent
+non-Telegram test tone remain separate manual evidence gates.
 
 ## Compatibility
 
