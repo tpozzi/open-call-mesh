@@ -1,8 +1,10 @@
 #pragma warning disable CA1416
+using System.Diagnostics;
 using OpenCallMesh.Audio.Windows;
 using OpenCallMesh.Agent;
 using OpenCallMesh.Controller;
 using OpenCallMesh.Domain;
+using OpenCallMesh.Transport;
 
 if (args is ["audio", "list"])
 {
@@ -56,6 +58,59 @@ if (args.Length >= 2 && args[0] == "agent" && args[1] == "capture-process")
     Console.WriteLine($"AGENT_CAPTURE_STATE={metrics.State}\nTELEGRAM_PROCESS_RESOLVED={(metrics.ProcessId > 0 ? "PASS" : "FAIL")}\nPROCESS_CAPTURE_IN_AGENT={(metrics.State == "Running" ? "PASS" : "FAIL")}\nRawFramesCaptured={metrics.RawFramesCaptured}\nCanonicalFramesProduced={metrics.CanonicalFramesProduced}\nCaptureBytes={metrics.CaptureBytes}\nPeak={metrics.Peak:F6}\nRMS={metrics.Rms:F6}\nSourceFormat={metrics.SourceSampleRate}Hz/{metrics.SourceChannels}ch\nCanonicalFormat={metrics.CanonicalSampleRate}Hz/{metrics.CanonicalChannels}ch");
     return;
 }
+if (args.Length >= 2 && args[0] == "media" && args[1] == "listen")
+{
+    var port = 17871;
+    var duration = 30;
+    for (var i = 2; i < args.Length; i++)
+    {
+        if (args[i] == "--port" && i + 1 < args.Length) _ = int.TryParse(args[++i], out port);
+        else if (args[i] == "--duration" && i + 1 < args.Length) _ = int.TryParse(args[++i], out duration);
+    }
+    long frames = 0, bytes = 0;
+    using var mediaCts = new CancellationTokenSource(TimeSpan.FromSeconds(duration));
+    try { await new MediaFrameTransport().RunServerAsync(new System.Net.IPEndPoint(System.Net.IPAddress.Any, port), frame => { frames++; bytes += frame.Payload.Length; return Task.CompletedTask; }, mediaCts.Token); } catch (OperationCanceledException) { }
+    Console.WriteLine($"MEDIA_LISTEN_FRAMES={frames}\nMEDIA_LISTEN_BYTES={bytes}\nMEDIA_LISTEN_DURATION_SECONDS={duration}");
+    return;
+}
+if (args.Length >= 2 && args[0] == "agent" && args[1] == "media-listen")
+{
+    var port = 17871; var duration = 30;
+    for (var i = 2; i < args.Length; i++)
+    {
+        if (args[i] == "--port" && i + 1 < args.Length) _ = int.TryParse(args[++i], out port);
+        else if (args[i] == "--duration" && i + 1 < args.Length) _ = int.TryParse(args[++i], out duration);
+    }
+    var metrics = await new AgentMediaReceiver().ListenAsync(port, TimeSpan.FromSeconds(duration));
+    Console.WriteLine($"AGENT_MEDIA_RECEIVER=PASS\nMEDIA_FRAMES_RECEIVED={metrics.Frames}\nMEDIA_BYTES_RECEIVED={metrics.Bytes}\nAGENT_B_AUDIO_LEVEL_NONZERO={(metrics.NonZeroFrames > 0 ? "YES" : "NO")}\nAGENT_B_PEAK={metrics.Peak:F6}\nAGENT_B_RMS={metrics.Rms:F6}");
+    return;
+}
+if (args.Length >= 2 && args[0] == "media" && args[1] == "send-tone")
+{
+    var host = "127.0.0.1"; var port = 17871; var duration = 10; const int rate = 48000; const int frameSamples = 960;
+    for (var i = 2; i < args.Length; i++)
+    {
+        if (args[i] == "--host" && i + 1 < args.Length) host = args[++i];
+        else if (args[i] == "--port" && i + 1 < args.Length) _ = int.TryParse(args[++i], out port);
+        else if (args[i] == "--duration" && i + 1 < args.Length) _ = int.TryParse(args[++i], out duration);
+    }
+    async IAsyncEnumerable<AudioFrame> Tone()
+    {
+        var total = rate * duration / frameSamples;
+        for (var n = 0; n < total; n++)
+        {
+            var samples = new float[frameSamples];
+            for (var i = 0; i < samples.Length; i++) samples[i] = 0.1f * MathF.Sin(2 * MathF.PI * 1000 * (n * frameSamples + i) / rate);
+            var payload = new byte[samples.Length * sizeof(float)];
+            Buffer.BlockCopy(samples, 0, payload, 0, payload.Length);
+            yield return new AudioFrame("synthetic-tone", "media-cli", "test-sink", n, Stopwatch.GetTimestamp(), payload);
+            await Task.Delay(20);
+        }
+    }
+    Console.WriteLine($"TEST_TONE_PROCESS_STARTED=YES\nTEST_TONE_FREQUENCY=1000\nTEST_TONE_DURATION_SECONDS={duration}");
+    await MediaFrameTransport.SendManyAsync(host, port, Tone(), CancellationToken.None);
+    return;
+}
 if (args is ["controller", "run"])
 {
     using var cts = new CancellationTokenSource();
@@ -73,4 +128,4 @@ if (args.Length >= 2 && args[0] == "agent" && args[1] == "register")
     Console.WriteLine($"Agent registered: {id}");
     return;
 }
-Console.WriteLine("OpenCallMesh CLI\nCommands: audio list | audio sessions | audio capture-process --process Telegram [--duration 30] | agent capture-process [--duration 30] | telegram find | controller run | agent register [id] [controller-host]");
+Console.WriteLine("OpenCallMesh CLI\nCommands: audio list | audio sessions | audio capture-process --process Telegram [--duration 30] | agent capture-process [--duration 30] | agent media-listen [--port 17871] | media listen [--port 17871] | media send-tone --host <host> [--duration 10] | telegram find | controller run | agent register [id] [controller-host]");
