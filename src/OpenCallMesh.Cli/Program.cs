@@ -46,6 +46,16 @@ if (args.Length >= 2 && args[0] == "audio" && args[1] == "capture-process")
     Console.WriteLine($"PROCESS_LOOPBACK_ACTIVATION={(result.Status == "PASS" ? "PASS" : "FAIL")}\nAPI_CALL_HRESULT=0x{result.ApiHresult:X8}\nACTIVATION_RESULT_HRESULT=0x{result.ActivationHresult:X8}\nFAILURE_HRESULT=0x{result.FailureHresult:X8}\nCAPTURE_STATE={result.Status}\nDuration={result.DurationSeconds:F1}\nFrames={result.Frames}\nBytes={result.Bytes}\nSilentFrames={result.SilentFrames}\nPeak={result.Peak:F6}\nRMS={result.Rms:F6}\nFormat={result.SampleRate}Hz/{result.Channels}ch/{result.BitsPerSample}bit");
     return;
 }
+if (args.Length >= 2 && args[0] == "agent" && args[1] == "capture-process")
+{
+    if (!OperatingSystem.IsWindows()) { Console.WriteLine("Windows Agent process capture requires Windows."); return; }
+    var duration = TimeSpan.FromSeconds(30);
+    for (var i = 2; i < args.Length; i++)
+        if (args[i] == "--duration" && i + 1 < args.Length && double.TryParse(args[++i], out var seconds)) duration = TimeSpan.FromSeconds(seconds);
+    var metrics = await new ProcessCaptureEndpoint(new("Telegram")).CaptureAsync(duration);
+    Console.WriteLine($"AGENT_CAPTURE_STATE={metrics.State}\nTELEGRAM_PROCESS_RESOLVED={(metrics.ProcessId > 0 ? "PASS" : "FAIL")}\nPROCESS_CAPTURE_IN_AGENT={(metrics.State == "Running" ? "PASS" : "FAIL")}\nRawFramesCaptured={metrics.RawFramesCaptured}\nCanonicalFramesProduced={metrics.CanonicalFramesProduced}\nCaptureBytes={metrics.CaptureBytes}\nPeak={metrics.Peak:F6}\nRMS={metrics.Rms:F6}\nSourceFormat={metrics.SourceSampleRate}Hz/{metrics.SourceChannels}ch\nCanonicalFormat={metrics.CanonicalSampleRate}Hz/{metrics.CanonicalChannels}ch");
+    return;
+}
 if (args is ["controller", "run"])
 {
     using var cts = new CancellationTokenSource();
@@ -63,4 +73,4 @@ if (args.Length >= 2 && args[0] == "agent" && args[1] == "register")
     Console.WriteLine($"Agent registered: {id}");
     return;
 }
-Console.WriteLine("OpenCallMesh CLI\nCommands: audio list | audio sessions | audio capture-process --process Telegram [--duration 30] | telegram find | controller run | agent register [id] [controller-host]");
+Console.WriteLine("OpenCallMesh CLI\nCommands: audio list | audio sessions | audio capture-process --process Telegram [--duration 30] | agent capture-process [--duration 30] | telegram find | controller run | agent register [id] [controller-host]");

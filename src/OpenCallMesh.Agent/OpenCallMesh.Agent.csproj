@@ -1,3 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup><ProjectReference Include="../OpenCallMesh.Domain/OpenCallMesh.Domain.csproj" /><ProjectReference Include="../OpenCallMesh.Protocol/OpenCallMesh.Protocol.csproj" /><ProjectReference Include="../OpenCallMesh.Transport/OpenCallMesh.Transport.csproj" /></ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../OpenCallMesh.Domain/OpenCallMesh.Domain.csproj" />
+    <ProjectReference Include="../OpenCallMesh.Protocol/OpenCallMesh.Protocol.csproj" />
+    <ProjectReference Include="../OpenCallMesh.Transport/OpenCallMesh.Transport.csproj" />
+    <ProjectReference Include="../OpenCallMesh.Core/OpenCallMesh.Core.csproj" />
+    <ProjectReference Include="../OpenCallMesh.Audio.Windows/OpenCallMesh.Audio.Windows.csproj" />
+  </ItemGroup>
 </Project>
