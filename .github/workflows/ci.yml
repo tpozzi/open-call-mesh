@@ -14,3 +14,14 @@ jobs:
       - run: dotnet run --project tests/OpenCallMesh.Core.Tests --configuration Release
       - run: dotnet run --project tests/OpenCallMesh.Protocol.Tests --configuration Release
       - run: dotnet run --project tests/OpenCallMesh.Transport.Tests --configuration Release
+  windows-build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - run: dotnet build OpenCallMesh.sln --configuration Release
+      - run: dotnet run --project tests/OpenCallMesh.Core.Tests --configuration Release
+      - run: dotnet run --project tests/OpenCallMesh.Protocol.Tests --configuration Release
+      - run: dotnet run --project tests/OpenCallMesh.Transport.Tests --configuration Release

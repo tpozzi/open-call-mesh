@@ -1,1 +1,6 @@
-<Project Sdk="Microsoft.NET.Sdk"><ItemGroup><ProjectReference Include="../OpenCallMesh.Audio.Abstractions/OpenCallMesh.Audio.Abstractions.csproj" /></ItemGroup></Project>
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../OpenCallMesh.Audio.Abstractions/OpenCallMesh.Audio.Abstractions.csproj" />
+    <PackageReference Include="NAudio.Wasapi" />
+  </ItemGroup>
+</Project>
